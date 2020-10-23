@@ -10,6 +10,13 @@ pg_ctl -D /usr/local/var/postgres start
         price NUMERIC(10,2) NOT NULL DEFAULT 0.00,
         CONSTRAINT products_pkey PRIMARY KEY (id)
     )
+    
+    CREATE TABLE store
+    (
+        s_id SERIAL,
+        p_id SERIAL,
+        is_available boolean
+     )
 
 # Get the required files
 
