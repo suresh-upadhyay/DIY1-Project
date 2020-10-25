@@ -112,8 +112,9 @@ func (s *store) getStoreProduct(db *sql.DB) error {
 }
 
 
-func (s *store) SetStoreProduct(db *sql.DB, productlist []string) error {
+func (s *store) SetStoreProduct(db *sql.DB , productlist []int) error {
 	DbQuery := `INSERT INTO store (s_id, p_id, is_available) VALUES `
+
 	for  v := range productlist {
 		DbQuery += `(` + strconv.Itoa(s.Store_ID) + `,` + strconv.Itoa(v)
 		DbQuery += "," + "true"
@@ -122,7 +123,6 @@ func (s *store) SetStoreProduct(db *sql.DB, productlist []string) error {
 	}
 	DbQuery = DbQuery[:len(DbQuery)-1]
 	DbQuery += `;`
-
 	_, err := (db.Exec(DbQuery))
 	return err
 }
