@@ -1,30 +1,33 @@
+
 package main
 
-
-
-
 import (
+	"bytes"
 	"database/sql"
-
 	// tom: for Initialize
 	"fmt"
 	"log"
 
+	"encoding/json"
 	// tom: for route handlers
 	"net/http"
-	"encoding/json"
 	"strconv"
 
 	// tom: go get required
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
-
 )
 
 type App struct {
 	Router *mux.Router
 	DB     *sql.DB
 }
+type storeProduct struct{
+	ID   int   `json:"id"`
+	Prod []int `json:"prod"`
+}
+
+
 
 // tom: initial function is empty, it's filled afterwards
 // func (a *App) Initialize(user, password, dbname string) { }
@@ -48,7 +51,7 @@ func (a *App) Initialize(user, password, dbname string) {
 // func (a *App) Run(addr string) { }
 // improved version
 func (a *App) Run(addr string) {
-	log.Fatal(http.ListenAndServe(":8080", a.Router))
+	log.Fatal(http.ListenAndServe(":2130", a.Router))
 }
 
 // tom: these are added later
@@ -90,7 +93,6 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 func (a *App) getProducts(w http.ResponseWriter, r *http.Request) {
 	count, _ := strconv.Atoi(r.FormValue("count"))
 	start, _ := strconv.Atoi(r.FormValue("start"))
-
 	if count > 10 || count < 1 {
 		count = 10
 	}
@@ -194,24 +196,26 @@ respondWithJSON(w, http.StatusOK, s)
 }
 
 
-
  func (a *App) SetStoreProduct(w http.ResponseWriter, r *http.Request) {
-
-	vars := mux.Vars(r)
-	id,err := strconv.Atoi(vars["id"])
-	if err != nil {
-		 respondWithError(w, http.StatusBadRequest, "Invalid store ID")
+	 store_to_add := storeProduct{}
+	 buf := new(bytes.Buffer)
+	 buf.ReadFrom(r.Body)
+	 JsonString := buf.String()
+	 var jsonStr = []byte(JsonString)
+	 err:= json.Unmarshal(jsonStr, &store_to_add)
+	 if err !=nil {
+		 respondWithError(w, http.StatusInternalServerError,err.Error())
 		 return
 	 }
-	s := store{Store_ID:id}
-	product_ids := [] string{"1","2","3"}
-	err = s.SetStoreProduct(a.DB, product_ids)
-	if err != nil {
+     id := store_to_add.ID
+	 reference_to_store := store{Store_ID:id}
+	 productlist := store_to_add.Prod
+	 err = reference_to_store.SetStoreProduct(a.DB,productlist)
+	 if err != nil {
 		respondWithError(w, http.StatusInternalServerError,err.Error())
 		return
-	}
-
-	respondWithJSON(w, http.StatusOK, s)
+	 }
+	 respondWithJSON(w, http.StatusOK, err)
 }
 
 
@@ -221,10 +225,8 @@ func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/product/{id:[0-9]+}", a.getProduct).Methods("GET")
 	a.Router.HandleFunc("/product/{id:[0-9]+}", a.updateProduct).Methods("PUT")
 	a.Router.HandleFunc("/product/{id:[0-9]+}", a.deleteProduct).Methods("DELETE")
-
-	// this Two api added
-
+	// This Two Api Added
 	a.Router.HandleFunc("/store/{id:[0-9]+}", a.getStoreProduct).Methods("GET")
-	a.Router.HandleFunc("/addstoreproduct/{id:[0-9]+}", a.SetStoreProduct).Methods("POST")
+	a.Router.HandleFunc("/addstoreproduct", a.SetStoreProduct).Methods("POST")
 
 }
