@@ -223,7 +223,9 @@ func TestGetStoreProduct(t *testing.T) {
 
 func TestAddStoreProduct(t *testing.T) {
 	clearStoreTable()
-	req, _ := http.NewRequest("POST", "/addstoreproduct/1", nil)
+	var jsonStr = []byte(`{"id":1,"prod":[1 , 2 , 3]}`)
+	req, _ := http.NewRequest("POST", "/addstoreproduct", bytes.NewBuffer(jsonStr))
+	req.Header.Set("Content-Type", "application/json")
 	response := executeRequest(req)
 	checkResponseCode(t, http.StatusOK, response.Code)
 }
